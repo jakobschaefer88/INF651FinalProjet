@@ -32,19 +32,16 @@ Function 2 createSelectOptions
 */
 
 function createSelectOptions(users) {
-// If called without passing a parameter, return undefined
     if (users === undefined) {
         return undefined;
     }
 
-// if user gave a non-array, return an empty array
     if (!Array.isArray(users)) {
         return [];
     }
 
     const options =[];
 
-// Loop trhrough each user object provided
     users.forEach(user => {
         const option = document.createElement('option');
         option.value = user.id;
@@ -52,7 +49,6 @@ function createSelectOptions(users) {
         options.push(option);
     });
 
-// Return the array of generated option elements
     return options;
 }
 
@@ -146,10 +142,14 @@ function addButtonListeners() {
     const buttons = document.querySelectorAll("main button");
     if (buttons.length === 0) return buttons;
 
+    function handler(event) {
+        const postId = event.target.dataset.postId;
+        toggleComments(event, postId);
+    }
+
     for (const button of buttons) {
-        const postId = button.dataset.postId;
-        if (postId) {
-            button.addEventListener("click", (event) => toggleComments(event, postId));
+        if (button.dataset.postId) {
+            button.addEventListener("click", handler);
         }
     }
 
@@ -168,12 +168,18 @@ Function 7 removeButtonListeners
 function removeButtonListeners() {
     const buttons = document.querySelectorAll("main button");
 
+    if (buttons.length === 0) {
+        return buttons;
+    }
+    function handler(event) {
+        const postId = event.target.dataset.postId;
+        toggleComments(event, postId);
+    }
+
     for (const button of buttons) {
-        const postId = button.dataset.postId;
-        if (postId) {
-            button.removeEventListener("click", (event) =>
-                toggleComments(event, postId)
-            );
+        const handler = button._toggleHandler;
+        if (button.dataset.postId) {
+            button.removeEventListener("click", handler);
         }
     }
 
@@ -192,7 +198,7 @@ Function 8 createComments
 */
 
 function createComments(comments) {
-    if (!comments) {
+    if (comments === undefined) {
         return undefined;
     }
 
@@ -346,7 +352,10 @@ async function displayComments(postId) {
     const comments = await getPostComments(postId);
     const fragment = createComments(comments);
 
-    section.append(fragment);
+    if (fragment) {
+        section.append(fragment);
+    }
+
     return section;
 }
 
@@ -450,9 +459,26 @@ Function 19 selectMenuChangeEventHandler
 */
 
 async function selectMenuChangeEventHandler(event) {
-    if (!event) return undefined;
+    if (!event) {
+        return undefined;
+    }
 
-    const selectMenu = event.target ?? event.currentTarget ?? event;
+    let selectMenu;
+
+    if (event instanceof HTMLElement) {
+        selectMenu = event;
+    } else if (event.target instanceof HTMLElement) {
+        selectMenu = event.target;
+    } else if (event.currentTarget instanceof HTMLElement) {
+        selectMenu = event.currentTarget;
+    } else {
+        selectMenu = document.getElementById("selectMenu");
+    }
+
+    if (!selectMenu) {
+        return undefined;
+    }
+
     selectMenu.disabled = true;
 
     const userId = Number(selectMenu.value);
